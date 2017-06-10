@@ -190,6 +190,10 @@ $RECYCLE.BIN/
 
 *.py[cod]
 __pycache__/
+*$py.class
+.Python
+build/
+develop-eggs/
 
 # Packages
 *.egg
