@@ -1,6 +1,6 @@
 
 from simcubes.basebehaviour import cBehaviourHolder
-
+from simcubes.en import orientation_to_vector
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,14 +18,6 @@ class cSimWorld:
         self.chunks = {}
         self.active_chunk_id = None
 
-    def iter_over_blocks(self):
-        '''
-        Iterates over all the blocks in the world
-        '''
-        for ch_i in self.chunks.values():
-            for bl_i in ch_i.values():
-                yield bl_i
-
     def set_active_chunk(self, chunk_id):
         '''
         Call this every time you switch between chunks
@@ -36,16 +28,58 @@ class cSimWorld:
         self.active_chunk_id = chunk_id
 
     def add_block(self, new_game_block):
+        '''
+        Add block to the active chunk
+        :param new_game_block: a new game block, with a generated gid.
+        '''
+        # TODO: generate gid
+        # TODO: save chunk as a reference
+        new_game_block.world = self
         self.chunks[self.active_chunk_id][new_game_block.gid] = new_game_block
 
+    def get_neighbour_by_direction(self, cube, direction):
+        '''
+        Get the neighbour to the cube in the given direction (in the active chunk)
+        :param cube: some cube that's already in the world
+        :param direction: find a cube in this direction (member of Orientation)
+                (relative to the cube's direction), 1 step over the axis.
+        :return: a cube or None
+        '''
+        dirvec = orientation_to_vector(direction)
+        return self.get_neighbour_by_vector(cube, dirvec)
+
+    def get_neighbour_by_vector(self, cube, dirvec):
+        '''
+        Get the neighbour to the cube in the given direction (in the active chunk)
+        :param dirvec: an offset vector like (1, 0, 0)
+        :return: a cube or None
+        '''
+        thischunk = self.chunks[self.active_chunk_id]
+        desired_coords = (cube.x + dirvec[0], cube.y + dirvec[1], cube.z + dirvec[2])
+        # TODO: we need a hashmap with coordinates for an active chunk
+        for cube_i in thischunk.values():
+            if cube_i.get_coords() == desired_coords:
+                return cube_i
+        return None
+
+    def iter_over_blocks(self):
+        '''
+        Iterates over all the blocks in the world (debug purposes)
+        '''
+        for ch_i in self.chunks.values():
+            for bl_i in ch_i.values():
+                yield bl_i
+
     def get_debug_string(self):
+        '''
+        Debug only
+        '''
         s = "A sim world with blocks: \n"
         for i, chunk_i in self.chunks.items():
             s += "\n*** CHUNK num" + str(i) + ":\n"
             for bl in chunk_i.values():
                 s += "\t" + bl.get_debug_string() + "\n"
         return s
-
 
 class cSimCube(cBehaviourHolder):
     '''
@@ -68,6 +102,7 @@ class cSimCube(cBehaviourHolder):
         self.z = z
         self.cube_type = cube_type
         self.orientation = orientation
+        self.world = None
         self.init_behaviours()
 
     def init_behaviours(self):
@@ -81,6 +116,12 @@ class cSimCube(cBehaviourHolder):
 
     def set_gid(self, gid):
         self.gid = gid
+
+    def get_coords(self):
+        '''
+        :return: (x, y, z) as a tuple
+        '''
+        return self.x, self.y, self.z
 
     def set_coords(self, x, y, z):
         self.x = x

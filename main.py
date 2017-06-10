@@ -29,8 +29,8 @@ if __name__ == "__main__":
     # Start a simulation cycle with batch ticks
     # Two variants implemented:
 
-    # realtime_batch_simulation_cycle(env, 10)
-    one_time_simulation(env, 4)
+    realtime_batch_simulation_cycle(env, 10)
+    # one_time_simulation(env, 4)
 
 
 
