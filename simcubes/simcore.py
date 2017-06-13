@@ -127,9 +127,14 @@ class cAsyncThread:
     thread_count = 0
 
     def __init__(self):
+        self.thread_count += 1
+        self.thread_id = self.thread_count
         self.env = None  # to be set upon cSimEnvironment.start_a_thread
         self.do_schedule = None  # to be set upon cSimEnvironment.start_a_thread
         self.generator_state = None  # to be set after
+
+    def __eq__(self, other):
+        return self.thread_id == other.thread_id
 
     def set_environment(self, env):
         self.env = env
@@ -159,9 +164,17 @@ class cAsyncThread:
         environment to schedule the first event. After that this is called
         from event upon finishig.
         '''
-        # TODO: error catching
-        # print(next(self.generator_state))
-        self.do_schedule(next(self.generator_state))
+        try:
+            self.do_schedule(next(self.generator_state))
+        except StopIteration:
+            # it's ok
+            self.after_last_step()
+
+    def after_last_step(self):
+        '''
+        Override this if you want to call something after the process ends
+        '''
+        pass
 
 
 # Events

@@ -32,32 +32,33 @@ def generate_simple_conveyor_system():
     TheWorld = generate_grass_plain(5,5,1)
 
     box1 = cBox()
-    box1.set_coords(2, 1, 2)
+    box1.set_coords(2, 1, 1)
     box1.set_gid(100)
     box1.set_orientation(Orientation.North)
     TheWorld.add_block(box1)
-    box1.connect()
 
     conv1 = cConveyor()
-    conv1.set_coords(2, 2, 2)
+    conv1.set_coords(2, 2, 1)
     conv1.set_gid(200)
     conv1.set_orientation(Orientation.North)
     TheWorld.add_block(conv1)
-    conv1.connect()
 
     conv2 = cConveyor()
-    conv2.set_coords(2, 3, 2)
+    conv2.set_coords(2, 3, 1)
     conv2.set_gid(300)
     conv2.set_orientation(Orientation.North)
     TheWorld.add_block(conv2)
-    conv2.connect()
 
     box2 = cBox()
-    box2.set_coords(2, 4, 2)
+    box2.set_coords(2, 4, 1)
     box2.set_gid(400)
     box2.set_orientation(Orientation.North)
     TheWorld.add_block(box2)
+
+    box1.connect()
     box2.connect()
+    conv1.connect()
+    conv2.connect()
 
     return TheWorld
 

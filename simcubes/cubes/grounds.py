@@ -12,6 +12,7 @@ class cGrass(cSimCube):
     def init_behaviours(self):
         self.cube_type = CubeTypes.blGrass
         beh = cBehBlooming(self)
-        self.add_behaviour(beh)
+        # so this would be an internal service
+        self.register_behaviour(beh)
 
 

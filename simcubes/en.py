@@ -7,7 +7,7 @@ from enum import IntEnum
 
 class Orientation(IntEnum):
     '''
-    Defines how one block is orientated
+    Defines how one block is oriented.
     '''
     West = 0    # Towards decreasing X
     East = 1    # Towards increasing X
@@ -16,50 +16,49 @@ class Orientation(IntEnum):
     Down = 4    # Towards decreasing Z
     Up = 5      # Towards increasing Y
 
-def orientation_to_vector(o):
-    '''
-    :param o: a member of Orientation
-    :return: a tuple (x,y,z) directing towards the
-             orientation. Like (1, 0, 0)
-    '''
-    if o == Orientation.West:
-        return -1, 0, 0
-    if o == Orientation.East:
-        return 1, 0, 0
-    if o == Orientation.South:
-        return 0, -1, 0
-    if o == Orientation.North:
-        return 0, 1, 0
-    if o == Orientation.Down:
-        return 0, 0, -1
-    if o == Orientation.Up:
-        return 0, 0, 1
-    raise BaseException('Unhandled direction!')
 
-def vector_to_orientation(vec):
+class AliasOrientation(IntEnum):
     '''
-    :param vec: a tuple, (x, y, z), like (1, 0, 0)
-    :return: a member of Orientation
+    Same as Orientation, but in "context" of a cube
     '''
-    if vec == (-1, 0, 0):
-        return Orientation.West
-    if vec == (1, 0, 0):
-        return Orientation.East
-    if vec == (0, -1, 0):
-        return Orientation.South
-    if vec == (0, 1, 0):
-        return Orientation.North
-    if vec == (0, 0, -1):
-        return Orientation.Down
-    if vec == (0, 0, 1):
-        return Orientation.Up
-    raise BaseException('Unhandled direction!')
+    Back = 0
+    Front = 1
+    Right = 2
+    Left = 3
+    Down = 4
+    Up = 5
 
-class Connections(IntEnum):
+
+class Rotation(IntEnum):
+    '''
+    Defines how the block is oriented.
+    Tooghether with Orientation this gives
+    24 possibilities to place the block.
+    '''
+    Up = 0      # 12:00 normal, heading to the sky
+    Right = 1   # 15:00 right wall on "earth"
+    Down = 2    # 18:00 upside down
+    Left = 3    # 21:00 left wall on "earth"
+
+
+class ServiceTypes(IntEnum):
     '''
     How one behaviour is connected to another? Depends upon block type.
+    This should be read as a service type provided by on one behaviour
+    to another. The rationale here is to suspend service requests when
+    there is no active service provider. So optimisation is the sole
+    reason why this enumaration exists.
     '''
-    pass
+    serInternal = 0  # service is not exposed and is not expected to be connected
+                     # Don't change "0" since it's used explicitly.
+    serProvideItems = 1  # e.g. Box
+    serReceiveItems = 2  # e.g. Box
+    serPullItems = 3  # e.g. Conveyor
+    serPushItems = 4  # e.g. Conveyor
+    # serSupplyLiquid = 2
+    # serSupplyElectricity = 3
+    # serSupplyMechanicalWork = 4
+    # serSupplyLabor = 5
 
 
 class CubeTypes(IntEnum):

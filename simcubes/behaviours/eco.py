@@ -2,10 +2,11 @@
 Environmental threads: blooming, growing, pollution e.t.c.
 '''
 
-from simcubes.simcore import cEvent
-from simcubes.basebehaviour import cSimulBehaviour
-
 import logging
+
+from simcubes.behaviours.basebehaviour import cSimulBehaviour
+from simcubes.simcore import cEvent
+
 logger = logging.getLogger(__name__)
 
 
