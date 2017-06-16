@@ -14,8 +14,8 @@ class cConveyor(cSimCube):
         # This behaviour is registered twice. This would help other
         # processes to decide how to communicate with this block.
         beh = cBehItemPullPush(self)
-        self.register_behaviour(beh, ServiceTypes.serPullItems)
-        self.register_behaviour(beh, ServiceTypes.serPushItems)
+        for serv_type in beh.get_service_types():
+            self.register_behaviour(beh, serv_type)
 
     def expose_cubewall_provided_service_types(self, rel_orientation):
         '''
@@ -23,8 +23,8 @@ class cConveyor(cSimCube):
         '''
         if rel_orientation == AliasOrientation.Front:
             return [ServiceTypes.serProvideItems]
-        if rel_orientation == AliasOrientation.Back:
-            return [ServiceTypes.serReceiveItems]
+        # if rel_orientation == AliasOrientation.Back:
+        #     return [ServiceTypes.serReceiveItems]
 
     def expose_cubewall_requested_service_types(self, rel_orientation):
         '''
@@ -33,6 +33,6 @@ class cConveyor(cSimCube):
         if rel_orientation == AliasOrientation.Back:
             # so we need someone to provide items to this block's back wall.
             return [ServiceTypes.serProvideItems]
-        if rel_orientation == AliasOrientation.Front:
-            # and we need someone to receive our items from the front wall
-            return [ServiceTypes.serReceiveItems]
+        # if rel_orientation == AliasOrientation.Front:
+        #     # and we need someone to receive our items from the front wall
+        #     return [ServiceTypes.serReceiveItems]

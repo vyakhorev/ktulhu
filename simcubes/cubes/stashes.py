@@ -14,8 +14,8 @@ class cBox(cSimCube):
         # This behaviour is registered twice. This would help other
         # processes to decide how to communicate with this block.
         beh = cBehItemStorage(self)
-        self.register_behaviour(beh, ServiceTypes.serProvideItems)
-        self.register_behaviour(beh, ServiceTypes.serReceiveItems)
+        for serv_type in beh.get_service_types():
+            self.register_behaviour(beh, serv_type)
 
     def expose_cubewall_provided_service_types(self, rel_orientation):
         '''

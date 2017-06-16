@@ -1,5 +1,6 @@
 
 from heapq import heappush, heappop
+from itertools import count
 
 import logging
 logger = logging.getLogger(__name__)
@@ -12,8 +13,14 @@ class cSimEnvironment:
     '''
 
     def __init__(self):
-        #self._threads = {}
+        self.threads = []  # used only for observing, the mechanics don't rely on this list yet
         self.schedule = cSimSchedule()
+
+    def get_time(self):
+        '''
+        :return: simulation time
+        '''
+        return self.schedule.get_time()
 
     def get_the_schedule(self):
         '''
@@ -29,10 +36,13 @@ class cSimEnvironment:
         All the rest events would be scheduled with like
         a chain reaction.
         '''
-        # TODO I should add something for "no more events" and "deactivate event"
-        #logger.info("Starting a thread " + async_thread.__repr__())
         async_thread.set_environment(self)
+        self.threads += [async_thread]  # this is not used in core mechanics
         async_thread.first_step()  # this would call cSimSchedule.schedule_event
+
+    def start_threads(self, iter_over_threads):
+        for thr_i in iter_over_threads:
+            self.start_a_thread(thr_i)
 
 
 class cSimSchedule:
@@ -66,7 +76,7 @@ class cSimSchedule:
         Schedule an event with a
         :param ev: some event with known duration
         '''
-        heappush(self._heap, (self._now + ev.duration, ev.priority, ev))
+        heappush(self._heap, (round(self._now + ev.duration, 5), ev.priority, ev))
 
     def apply_next_tick(self, until_T):
         '''
@@ -111,7 +121,7 @@ class cSimSchedule:
         '''
         while True:
             self._now, P, an_event = heappop(self._heap)
-            logger.info("Simulation time is incremented up to " + str(self._now))
+            #logger.info("Simulation time is incremented up to " + str(self._now))
             if not an_event.cancelled:
                 an_event.process_step()
             yield self._now
@@ -124,17 +134,27 @@ class cAsyncThread:
     thread in the simulation.
     '''
 
-    thread_count = 0
+    thread_count = count(0)
 
     def __init__(self):
-        self.thread_count += 1
-        self.thread_id = self.thread_count
+        self.thread_id = next(self.thread_count)
         self.env = None  # to be set upon cSimEnvironment.start_a_thread
         self.do_schedule = None  # to be set upon cSimEnvironment.start_a_thread
         self.generator_state = None  # to be set after
+        self.last_failed_event = None  # event that was right before the snooze call
+        self.snoozed = False
 
     def __eq__(self, other):
         return self.thread_id == other.thread_id
+
+    def __repr__(self):
+        return "thread {}".format(self.thread_id)
+
+    def get_time(self):
+        '''
+        :return: simulation time
+        '''
+        return self.env.get_time()
 
     def set_environment(self, env):
         self.env = env
@@ -164,18 +184,51 @@ class cAsyncThread:
         environment to schedule the first event. After that this is called
         from event upon finishig.
         '''
+        if self.generator_state is None:
+            # It's ok, run can generate no events
+            return
         try:
-            self.do_schedule(next(self.generator_state))
+            if self.snoozed:
+                return
+
+            # main generator loop here
+            next_event = next(self.generator_state)
+            self.do_schedule(next_event)
+
         except StopIteration:
-            # it's ok
+            # it's ok, event generators can stop
             self.after_last_step()
+
+    def snooze(self):
+        '''
+        This would stop this instance (see step). So the event would not schedule the next
+        event.
+        '''
+        self.snoozed = True
+        logger.info("[t={}][{} is snoozed]".format(self.get_time(),self))
+
+    def wake(self):
+        '''
+        Resume stepping over the event generator. We should have a link to the last
+        failed event. So that we can just reschedule it again, it would step in the end.
+        '''
+        if not self.snoozed:
+            return
+        self.snoozed = False
+        if self.last_failed_event is None:
+            # If the process just stoped without failure
+            self.step()
+            logger.info("[t={}][{} is activated with next event]".format(self.get_time(),self))
+        else:
+            self.do_schedule(self.last_failed_event)
+            self.last_failed_event = None
+            logger.info("[t={}][{} is activated last failed event]".format(self.get_time(),self))
 
     def after_last_step(self):
         '''
         Override this if you want to call something after the process ends
         '''
         pass
-
 
 # Events
 
@@ -201,6 +254,12 @@ class cEvent:
     def __eq__(self, other):
         return self.priority == other.priority
 
+    def __repr__(self):
+        return "EVENT {} planned by {}".format(self.__class__.__name__, self.beh)
+
+    def get_time(self):
+        return self.beh.get_time()
+
     def process_step(self):
         '''
         This thing is call from the schedule to complete an event.
@@ -213,11 +272,31 @@ class cEvent:
         So the next event is scheduled right after the previous one
         is applied
         '''
-        self.apply()
+        success = self.apply()
+        if not success:
+            logger.info("[t={}][{} - failed]".format(self.get_time(), self))
+            self.beh.snooze()  # this would stop the behaviour generator
+            self.rollback_in_case_of_failure()
+            self.beh.last_failured_event = self
+            return
+        if self.__class__.__name__ != "cEvent":  # omit the timeouts\
+            logger.info("[t={}][{} - success]".format(self.get_time(), self))
         self.beh.step()
 
     def apply(self):
         '''
-        Change the self.beh state here. ?Or pass a callback here.
+        Implement the event logic (over self.beh) here. You MUST return True or False.
+
+        In case of a failure the 'thread' would be stopped, the event would
+        be saved for a retry.
+        :return: Return True in case of success. Return False in case of a failure.
+        '''
+        return True
+
+    def rollback_in_case_of_failure(self):
+        '''
+        This would be called in case if apply returns False.
+        So if apply logic changed some state before the failure, you can implement
+        rollback operations here.
         '''
         pass

@@ -28,11 +28,11 @@ logger.error('that is impossible!')
 
 import logging
 
-USE_ONLY_LAST_NAME = False # "DEVS.Node.Shop or just Shop" ?
+USE_ONLY_LAST_NAME = True # "DEVS.Node.Shop or just Shop" ?
 if USE_ONLY_LAST_NAME:    # max length for console logger name (should be higher if we use full name)
-    NAME_TRUNC = 50
+    NAME_TRUNC = 15
 else:
-    NAME_TRUNC = 50
+    NAME_TRUNC = 15
 LEVEL_TRUNC = 4           # max length for console level name truncate
 
 def config_logging(level=logging.INFO, toconsole=True, tofile='', whitelist=None, blacklist=None):
@@ -91,7 +91,7 @@ class TableFormatter(logging.Formatter):
     def format(self, record):
         lev, nam, msg = record.levelname, record.name, record.getMessage()
         if USE_ONLY_LAST_NAME: nam = hier_trunc(nam)
-        s = '[' + special_trunc(lev, LEVEL_TRUNC) + '][' + special_trunc(nam, NAME_TRUNC) + ']\tMSG: ' + msg
+        s = '[' + special_trunc(lev, LEVEL_TRUNC) + '][' + special_trunc(nam, NAME_TRUNC) + ']\t ' + msg
         return s
 
 def special_trunc(some_str, maxlen=30):

@@ -22,19 +22,19 @@ if __name__ == "__main__":
     env = cSimEnvironment()
     # spawn a blooming grass plane
     level = generate_simple_conveyor_system()
-    # # activate the threads in the environment
-    # for thr_i in iter_threads_in_holders(level.iter_over_blocks()):
-    #     env.start_a_thread(thr_i)
-    # # Start a simulation cycle with batch ticks
-    # # Two variants implemented:
-    #
-    # realtime_batch_simulation_cycle(env, 10)
-    # # one_time_simulation(env, 4)
-    #
-    #
-    #
-    #
-    #
-    #
-    #
+    # activate the threads in the environment
+    for thr_i in iter_threads_in_holders(level.iter_over_blocks()):
+        env.start_a_thread(thr_i)
+    # Start a simulation cycle with batch ticks
+    # Two variants implemented:
+
+    realtime_batch_simulation_cycle(env, 10)
+    # one_time_simulation(env, 4)
+
+
+
+
+
+
+
 

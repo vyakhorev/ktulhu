@@ -6,7 +6,7 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 
-def realtime_batch_simulation_cycle(env, seconds, tick_seconds=1, factor = 10):
+def realtime_batch_simulation_cycle(env, seconds, tick_seconds=1, factor = 10, dolog=True):
     '''
     Starts realtime simulation of a given environment
     :param env: cSimEnvironment, a storage for schedule and an
@@ -30,7 +30,8 @@ def realtime_batch_simulation_cycle(env, seconds, tick_seconds=1, factor = 10):
         events_happend = sch.apply_next_tick(game_time)
         events_count = str(len(events_happend))
         real_dt = str(time.monotonic() - start_time)
-        logger.info('game time is ' + str(game_time) + ', real tick is ' + real_dt + ',  events happened: ' + events_count)
+        if dolog:
+            logger.info('game time is ' + str(game_time) + ', real tick is ' + real_dt + ',  events happened: ' + events_count)
 
 def one_time_simulation(env, until):
     '''
@@ -44,5 +45,4 @@ def one_time_simulation(env, until):
     for t in sch.apply_event_after_event():
         if t > until:
             break
-
 

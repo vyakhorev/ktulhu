@@ -33,43 +33,43 @@ class cSimulBehaviour(cAsyncThread):
 
     def __init__(self, parent):
         '''
-        :param env: simulation environment, to be excluded from __init__ calls
         :param parent: an object from the simulation (a block, a bunch of blocks).
                 So parent is a subclass of cBehaviourHolder.
         '''
         super().__init__()
         self.parent = parent
-        self.connected = {}  # one behaviour may serve as different services
-        self.is_active = False
+        self.connected = []
 
-    def connect_to(self, other_behaviour, service_type):
-        '''
-        This should be updated only when a cube (or it's behaviour) is added / deleted,
-        don't call this with other types of events.
-        :param other_behaviour: other behaviour that we want to communicate with
-        :param connection_type: en.ConnectionTypes
-        '''
-        if not(service_type in self.connected):
-            self.connected[service_type] = []
-        if not(other_behaviour in self.connected[service_type]):
-            # avoid duplicates. However, one behaviour can connect
-            # with different connection types.
-            self.connected[service_type] += [other_behaviour]
+    def __repr__(self):
+        return "[behaviour of {}][{}]".format(self.parent, super().__repr__())
+
+    def connect_to(self, other_behaviour):
+        if not(other_behaviour in self.connected):
+            self.connected += [other_behaviour]
 
     def disconnect_from(self, other_behaviour):
         '''
         This does not happen frequently, so it's ok to do some look ups here
         :param other_behaviour: disconnect from this behaviour
         '''
-        for lst in self.connected.values():
-            # we have to do this for all the connection types.
-            try:
-                i = lst.index(other_behaviour)
-                lst.pop(i)
-            except ValueError:
-                # it's ok since we're scanning all the connection types
-                pass
+        try:
+            i = self.connected.index(other_behaviour)
+            self.connected.pop(i)
+        except ValueError:
+            logger.warning("An attempt to disconnect unrelated behaviour")
 
+    def is_active(self):
+        return not self.snoozed
+
+    def get_poked(self):
+        """
+        This is called from other processes to wake up the thread.
+        Default realisation - an attempt to wake up. There is no
+        
+        """
+        self.wake()
+
+    # to be deleted
     def check_activity_of_connections(self, service_type):
         '''
         Checks whether there is an active behaviour in the connection type
@@ -77,9 +77,10 @@ class cSimulBehaviour(cAsyncThread):
         to suspend all the activity.
         :return: True if there is a single active connection. False otherwise.
         '''
-        for _ in filter(lambda beh: beh.is_active, self.connected[service_type]):
+        for _ in filter(lambda beh: beh.is_active(), self.connected[service_type]):
             return True
 
+    # to be deleted
     def inform_connected_about_activation(self, service_type=None):
         '''
         When this behaviour starts to activate, it should inform all the
@@ -95,6 +96,7 @@ class cSimulBehaviour(cAsyncThread):
             for beh in self.connected[service_type]:
                 beh.get_informed_about_activation(service_type)
 
+    # to be deleted
     def inform_connected_about_deactivation(self, service_type=None):
         '''
         The opposite of inform_connected_about_activation
@@ -107,6 +109,7 @@ class cSimulBehaviour(cAsyncThread):
             for beh in self.connected[service_type]:
                 beh.get_informed_about_deactivation(service_type)
 
+    # to be deleted
     def get_informed_about_activation(self, service_type):
         '''
         Implement this to optimise the simulation. If this behaviour
@@ -124,6 +127,7 @@ class cSimulBehaviour(cAsyncThread):
         '''
         pass
 
+    # to be deleted
     def get_informed_about_deactivation(self, service_type):
         '''
         Implement this to optimise the simulation. You should deactivate
@@ -194,8 +198,24 @@ class cBehaviourHolder:
             logger.error('Attempt to get a non-existing service type!')
             raise BaseException('Attempt to get a non-existing service type')
 
+    def connect_to_another_holder(self, other_holder, inner_service_type=None, external_service_type=None):
+        '''
+        The main entry point for behaviour connection of one behaviour holder with another.
+        For example, this is called when cubes find a match with service layers.
+
+        Override this call in order to change or improve connection routine!
+
+        :param other_holder: the other behaviour holder.
+        :param inner_service_type: service type from this entity
+        :param external_service_type: service type of other entity
+        '''
+        if not(inner_service_type is None or external_service_type is None):
+            self.behavioural_connect_to(other_holder, inner_service_type, external_service_type)
+
     def behavioural_connect_to(self, other_holder, inner_service_type, external_service_type):
         '''
+        This may simplify connection of one block to another.
+
         Connect to another behaviour holder (a block or a chunk usually).
         Shall take all the behaviours from other_holder with external_service_type
         and connect them with all the behaviours from this entity with inner_service_type.

@@ -41,24 +41,13 @@ class Rotation(IntEnum):
     Left = 3    # 21:00 left wall on "earth"
 
 
-class ServiceTypes(IntEnum):
+class BehaviourTypes(IntEnum):
     '''
-    How one behaviour is connected to another? Depends upon block type.
-    This should be read as a service type provided by on one behaviour
-    to another. The rationale here is to suspend service requests when
-    there is no active service provider. So optimisation is the sole
-    reason why this enumaration exists.
+    Just enumerate all the behaviour classes. This enum is
+    available as a class slot Behaviour.BehaviourType
     '''
-    serInternal = 0  # service is not exposed and is not expected to be connected
-                     # Don't change "0" since it's used explicitly.
-    serProvideItems = 1  # e.g. Box
-    serReceiveItems = 2  # e.g. Box
-    serPullItems = 3  # e.g. Conveyor
-    serPushItems = 4  # e.g. Conveyor
-    # serSupplyLiquid = 2
-    # serSupplyElectricity = 3
-    # serSupplyMechanicalWork = 4
-    # serSupplyLabor = 5
+    BehItemStorage = 0
+    BehItemPullPush = 1
 
 
 class CubeTypes(IntEnum):

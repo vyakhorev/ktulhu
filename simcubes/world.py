@@ -274,6 +274,25 @@ class cSimCube(cBehaviourHolder):
         '''
         logger.info(self.get_debug_string() + " MEET " + other.get_debug_string() + " WALL {0} TO {1} ".format(str(selfdir), str(otherdir)))
 
+        i_provide = self.expose_cubewall_provided_service_types(selfdir)
+        he_needs = other.expose_cubewall_requested_service_types(otherdir)
+        i_need = self.expose_cubewall_requested_service_types(selfdir)
+        he_provide = other.expose_cubewall_provided_service_types(otherdir)
+
+        if not((i_need is None) or (he_provide is None)):
+            for this_ser in i_need:
+                for other_ser in he_provide:
+                    if this_ser == other_ser:
+                        logger.info(self.get_debug_string() + ' NEEDS ' + str(this_ser) + ' FROM ' + other.get_debug_string())
+                        self.connect_to_another_holder(other, this_ser, other_ser)
+        if not((i_provide is None) or (he_needs is None)):
+            for this_ser in i_provide:
+                for other_ser in he_needs:
+                    if this_ser == other_ser:
+                        logger.info(self.get_debug_string() + ' OFFERS ' + str(this_ser) + ' TO ' + other.get_debug_string())
+                        self.connect_to_another_holder(other, this_ser, other_ser)
+
+
 
 
 
